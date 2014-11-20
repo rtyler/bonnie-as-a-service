@@ -4,14 +4,28 @@ require 'rubygems'
 require 'colorize'
 require 'csv'
 
-out = File.open('report.csv', 'w+')
 
-out.write(File.open('bonnie-header.csv').read)
-out.write("\n")
+CSV.open('report.csv', 'w+') do |csv|
+  CSV.foreach('bonnie-header.csv') do |row|
+    csv << row
+  end
 
-Dir['./results/*.csv'].each do |f|
-  puts "processing #{f}".green
-  out.write(File.open(f).read) 
+  Dir['./results/*.csv'].each do |f|
+    puts "processing #{f}".green
+    CSV.foreach(f) do |row|
+      row.each_with_index do |element, index|
+        next if element.nil?
+
+        if element.match(/us/)
+          element = element.to_f / 1_000_000
+        elsif element.match(/ms/)
+        element = element.to_f / 1_000
+        end
+
+        row[index] = element
+      end
+
+      csv << row
+    end
+  end
 end
-
-out.close
