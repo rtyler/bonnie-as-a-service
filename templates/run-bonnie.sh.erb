@@ -6,8 +6,8 @@
 which bonnie
 
 if [ $? -ne 0 ]; then
-  sudo apt-get update
-  sudo apt-get install -y bonnie++
+  sudo apt-get update -q
+  sudo apt-get install -qy bonnie++
 else
   echo "bonnie is already installed"
 fi;
@@ -20,10 +20,6 @@ fi;
 
 OUTPUT_CSV="output_${2}_${3}.csv"
 OUTPUT_HTML="output_${2}_${3}.html"
-
-# Clean out previous results
-echo "Cleaning out previous results"
-rm -f *.html *.csv
 
 time bonnie -d $1 \
             -s $2 \

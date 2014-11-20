@@ -29,6 +29,8 @@ module Baas
     config = configuration.hosts[name]
     Net::SSH.start(config.hostname, config.username) do |ssh|
       commands.each do |command|
+        puts "executing on #{name}: `#{command}`".green
+        start = Time.now.utc
         ssh.exec!(command) do |channel, type, data|
           if type == :stdout
             puts data
@@ -36,6 +38,8 @@ module Baas
             puts data.red
           end
         end
+
+        puts "`#{command}` took #{Time.now.utc - start} seconds"
       end
     end
   end
@@ -80,12 +84,19 @@ module Baas
 
       commands = [
           "echo 'Connection created to #{name}'",
-          #"sh run-bonnie.sh /mnt/bonnie-test 2048 #{name}",
-      ].freeze
+          "sh run-bonnie.sh \$HOME 2048 #{name}",
+      ]
+
+      [2048, 4096].each do |size|
+        commands << "sh run-bonnie.sh /mnt/bonnie-test #{size} #{name}"
+      end
+
+      commands.freeze
 
       threads << Thread.new do
         rexec!(name, commands)
         download_results_from name
+        rexec!(name, ['rm -f *.csv *.html'])
       end
     end
 
