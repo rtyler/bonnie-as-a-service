@@ -1,0 +1,93 @@
+#!/usr/bin/env ruby
+
+require 'rubygems'
+require 'colorize'
+require 'erb'
+require 'hashie'
+require 'net/ssh'
+require 'net/scp'
+require 'yaml'
+
+
+started = Time.now.utc
+
+module Baas
+  def self.line_clear!
+    puts
+    puts ('-' * 30).red
+    puts
+  end
+
+  def self.configuration
+    return @config if @config
+
+    @config = Hashie::Mash.new(YAML.load(File.open('targets.yml').read))
+  end
+
+  def self.rexec!(name, commands)
+    puts "rexec! for #{name} with #{commands.size} commands".green
+    config = configuration.hosts[name]
+    Net::SSH.start(config.hostname, config.username) do |ssh|
+      commands.each do |command|
+        ssh.exec!(command) do |channel, type, data|
+          if type == :stdout
+            puts data
+          elsif type == :stderr
+            puts data.red
+          end
+        end
+      end
+    end
+  end
+
+  def self.upload_scripts!(name)
+    config = configuration.hosts[name]
+    dir = '~'
+    user = config.username
+
+    bonnie = ERB::new(File.open('templates/run-bonnie.sh.erb').read).result(binding)
+
+    Net::SCP.start(config.hostname, config.username) do |scp|
+      scp.upload!(StringIO.new(bonnie), 'run-bonnie.sh')
+    end
+  end
+
+  def self.run!
+    line_clear!
+
+    puts 'Using these defaults:'
+    configuration.defaults.each_pair do |name, value|
+      puts "\t#{name} = #{value}".yellow
+    end
+
+    puts "For these hosts:"
+    configuration.hosts.each_pair do |name, host|
+      puts "\t#{name} (a #{host.metadata.type} in #{host.metadata.cloud}/#{host.metadata.region})".yellow
+    end
+
+    line_clear!
+
+    threads = []
+
+    configuration.hosts.each_key do |name|
+      upload_scripts!(name)
+
+      commands = [
+          "echo 'Connection created to #{name}'",
+          "sh run-bonnie.sh /mnt/bonnie-test 2048 #{name}",
+      ].freeze
+
+      threads << Thread.new do
+        rexec!(name, commands)
+      end
+    end
+
+    threads.each { |t| t.join }
+
+    line_clear!
+  end
+end
+
+Baas.run!
+
+puts "Started at #{started}, finished at #{Time.now.utc}"
