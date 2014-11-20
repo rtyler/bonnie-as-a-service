@@ -87,7 +87,7 @@ module Baas
           "sh run-bonnie.sh \$HOME 2048 #{name}",
       ]
 
-      [2048, 4096].each do |size|
+      [2048, 4096, 8192].each do |size|
         commands << "sh run-bonnie.sh /mnt/bonnie-test #{size} #{name}"
       end
 
