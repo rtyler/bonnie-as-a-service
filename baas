@@ -84,7 +84,7 @@ module Baas
 
       commands = [
           "echo 'Connection created to #{name}'",
-          "sh run-bonnie.sh \$HOME 2048 #{name}",
+          #"sh run-bonnie.sh \$HOME 2048 #{name}",
       ]
 
       [2048, 4096, 8192].each do |size|
