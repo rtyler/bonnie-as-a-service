@@ -1,0 +1,17 @@
+#!/usr/bin/env ruby
+
+require 'rubygems'
+require 'colorize'
+require 'csv'
+
+out = File.open('report.csv', 'w+')
+
+out.write(File.open('bonnie-header.csv').read)
+out.write("\n")
+
+Dir['./results/*.csv'].each do |f|
+  puts "processing #{f}".green
+  out.write(File.open(f).read) 
+end
+
+out.close
