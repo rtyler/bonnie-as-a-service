@@ -40,7 +40,7 @@ module Baas
     end
   end
 
-  def self.upload_scripts!(name)
+  def self.upload_scripts_to(name)
     config = configuration.hosts[name]
     dir = '~'
     user = config.username
@@ -50,6 +50,12 @@ module Baas
     Net::SCP.start(config.hostname, config.username) do |scp|
       scp.upload!(StringIO.new(bonnie), 'run-bonnie.sh')
     end
+  end
+
+  def self.download_results_from(name)
+    config = configuration.hosts[name]
+
+    `scp #{config.username}@#{config.hostname}:*.{csv,html} ./results/`
   end
 
   def self.run!
@@ -70,15 +76,16 @@ module Baas
     threads = []
 
     configuration.hosts.each_key do |name|
-      upload_scripts!(name)
+      upload_scripts_to name
 
       commands = [
           "echo 'Connection created to #{name}'",
-          "sh run-bonnie.sh /mnt/bonnie-test 2048 #{name}",
+          #"sh run-bonnie.sh /mnt/bonnie-test 2048 #{name}",
       ].freeze
 
       threads << Thread.new do
         rexec!(name, commands)
+        download_results_from name
       end
     end
 

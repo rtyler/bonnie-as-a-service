@@ -30,7 +30,8 @@ time bonnie -d $1 \
             -r 1024 \
             -m $3 \
             -u $USER \
-            -q > $OUTPUT_CSV
+            -q > $OUTPUT_CSV \
+            2> /dev/null # Get rid of stderr
 
 bon_csv2html < $OUTPUT_CSV > $OUTPUT_HTML
 
