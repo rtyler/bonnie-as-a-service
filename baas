@@ -27,7 +27,7 @@ module Baas
   def self.rexec!(name, commands)
     puts "rexec! for #{name} with #{commands.size} commands".green
     config = configuration.hosts[name]
-    Net::SSH.start(config.hostname, config.username) do |ssh|
+    Net::SSH.start(config.hostname, config.username, :password => config.password) do |ssh|
       commands.each do |command|
         puts "executing on #{name}: `#{command}`".green
         start = Time.now.utc
@@ -51,7 +51,7 @@ module Baas
 
     bonnie = ERB::new(File.open('templates/run-bonnie.sh.erb').read).result(binding)
 
-    Net::SCP.start(config.hostname, config.username) do |scp|
+    Net::SCP.start(config.hostname, config.username, :password => config.password) do |scp|
       scp.upload!(StringIO.new(bonnie), 'run-bonnie.sh')
     end
   end
