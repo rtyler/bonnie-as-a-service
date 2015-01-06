@@ -21,6 +21,8 @@ fi;
 OUTPUT_CSV="output_${2}_${3}.csv"
 OUTPUT_HTML="output_${2}_${3}.html"
 
+rm -f $OUTPUT_CSV $OUTPUT_HTML
+
 time bonnie -d $1 \
             -s $2 \
             -r 1024 \
