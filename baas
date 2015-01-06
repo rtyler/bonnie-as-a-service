@@ -6,6 +6,7 @@ require 'erb'
 require 'hashie'
 require 'net/ssh'
 require 'net/scp'
+require 'net/sftp'
 require 'yaml'
 
 
@@ -59,7 +60,15 @@ module Baas
   def self.download_results_from(name)
     config = configuration.hosts[name]
 
-    `scp #{config.username}@#{config.hostname}:*.{csv,html} ./results/`
+    Net::SFTP.start(config.hostname, config.username, :password => config.password) do |sftp|
+      sftp.dir.foreach('.') do |file|
+        if file.name =~ /\.(csv|html)/
+          print "Downloading #{file.name}..."
+          sftp.download!(file.name, File.join('results', file.name))
+          puts "..done"
+        end
+      end
+    end
   end
 
   def self.run!
